@@ -36,6 +36,7 @@ class Config(object):
     MODEL_NAME = "WhaleTriplet"
     LOG_INTERVAL = 20
     RESUME = None
+    VISDOM_NAME = "WhaleTriplet"
 
     def __init__(self):
         self.TRAIN_DF = pd.read_csv(self.TRAIN_CSV)
