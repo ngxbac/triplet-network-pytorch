@@ -13,6 +13,8 @@ from torchvision.models import *
 
 from triplet_whale_loader import WhaleLoader
 from tripletnet import Tripletnet
+from losses import *
+from embedding import *
 from configure import *
 
 config = Config()
@@ -21,38 +23,29 @@ def main():
     train_loader = WhaleLoader(config, n_triplets=50000, transform=config.TRANSFORM)
     test_loader = WhaleLoader(config, n_triplets=10000, transform=config.TRANSFORM)
 
-    class Net(nn.Module):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.base_model = resnet50(pretrained=True)
-            self.base_model.fc.out_features = 128
-            # print(self.base_model)
-
-        def forward(self, x):
-            # print("X_shape {}".format(x.shape))
-            return self.base_model(x)
-
-    model = Net()
-    tnet = Tripletnet(model)
+    embedding = EmbeddingL2()
+    tnet = Tripletnet(embedding)
     if config.USE_GPU:
         tnet.cuda()
 
     # optionally resume from a checkpoint
-    # if args.resume:
-    #     if os.path.isfile(args.resume):
-    #         print("=> loading checkpoint '{}'".format(args.resume))
-    #         checkpoint = torch.load(args.resume)
-    #         args.start_epoch = checkpoint['epoch']
-    #         best_prec1 = checkpoint['best_prec1']
-    #         tnet.load_state_dict(checkpoint['state_dict'])
-    #         print("=> loaded checkpoint '{}' (epoch {})"
-    #                 .format(args.resume, checkpoint['epoch']))
-    #     else:
-    #         print("=> no checkpoint found at '{}'".format(args.resume))
+    if config.RESUME:
+        if os.path.isfile(config.RESUME):
+            print("=> loading checkpoint '{}'".format(config.RESUME))
+            checkpoint = torch.load(config.RESUME)
+            config.START_EPOCH = checkpoint['epoch']
+            best_prec1 = checkpoint['best_prec1']
+            tnet.load_state_dict(checkpoint['state_dict'])
+            print("=> loaded checkpoint '{}' (epoch {})"
+                    .format(config.RESUME, checkpoint['epoch']))
+        else:
+            print("=> no checkpoint found at '{}'".format(config.RESUME))
 
     cudnn.benchmark = True
 
-    criterion = torch.nn.MarginRankingLoss(margin = config.MARGIN)
+    # Chose the loss for model
+    # criterion = torch.nn.MarginRankingLoss(margin = config.MARGIN)
+    criterion = TripletLoss(margin=config.MARGIN)
     optimizer = optim.SGD(tnet.parameters(), lr=config.LR)
 
     n_parameters = sum([p.data.nelement() for p in tnet.parameters()])
@@ -94,7 +87,8 @@ def train(train_loader, tnet, criterion, optimizer, epoch):
             target = target.cuda()
         target = Variable(target)
 
-        loss_triplet = criterion(dista, distb, target)
+        # loss_triplet = criterion(dista, distb, target)
+        loss_triplet = criterion(embedded_x, embedded_y, embedded_z)
         loss_embedd = embedded_x.norm(2) + embedded_y.norm(2) + embedded_z.norm(2)
         loss = loss_triplet + 0.001 * loss_embedd
 
@@ -134,12 +128,13 @@ def test(test_loader, tnet, criterion, epoch):
         data1, data2, data3 = Variable(data1), Variable(data2), Variable(data3)
 
         # compute output
-        dista, distb, _, _, _ = tnet(data1, data2, data3)
+        dista, distb, embedded_x, embedded_y, embedded_z = tnet(data1, data2, data3)
         target = torch.FloatTensor(dista.size()).fill_(1)
         if config.USE_GPU:
             target = target.cuda()
         target = Variable(target)
-        test_loss =  criterion(dista, distb, target).data[0]
+        # test_loss =  criterion(dista, distb, target).data[0]
+        test_loss = criterion(embedded_x, embedded_y, embedded_z).data[0]
 
         # measure accuracy and record loss
         acc = accuracy(dista, distb)

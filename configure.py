@@ -35,6 +35,7 @@ class Config(object):
     DISTANCE_TH = 0.6
     MODEL_NAME = "WhaleTriplet"
     LOG_INTERVAL = 20
+    RESUME = None
 
     def __init__(self):
         self.TRAIN_DF = pd.read_csv(self.TRAIN_CSV)
