@@ -28,6 +28,8 @@ def main():
     if config.USE_GPU:
         tnet.cuda()
 
+    best_acc = 0
+
     # optionally resume from a checkpoint
     if config.RESUME:
         if os.path.isfile(config.RESUME):
