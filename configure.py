@@ -34,7 +34,7 @@ class Config(object):
     MARGIN = 0.04
     DISTANCE_TH = 0.6
     MODEL_NAME = "WhaleTriplet"
-    LOG_INTERVAL = 20
+    LOG_INTERVAL = 200
     RESUME = None
     VISDOM_NAME = "WhaleTriplet"
 
