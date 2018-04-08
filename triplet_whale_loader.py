@@ -48,6 +48,9 @@ class WhaleLoader(data.Dataset):
 
     def make_triplet_list(self, ntriplets):
 
+        # Training with labels which is not new_whale only.
+        new_whale_idx = self.config.CLS_TO_IDX("new_whale")
+
         print("3===D~ Generating {} triplets".format(ntriplets))
 
         triplets = []
@@ -56,6 +59,9 @@ class WhaleLoader(data.Dataset):
             anchor_idx = randint(0, self.config.N_CLASS - 1)
 
             # Random an anchor
+            while anchor_idx == new_whale_idx:
+                anchor_idx = randint(0, self.config.N_CLASS - 1)
+
             anchor_cls = self.config.CLASSES[anchor_idx]
             anchor_idx = randint(0, len(self.config.CLS_TO_INDICATES[anchor_cls]) - 1)
             anchor = self.config.CLS_TO_INDICATES[anchor_cls][anchor_idx]
@@ -66,7 +72,7 @@ class WhaleLoader(data.Dataset):
 
             # Random a negative
             negative_idx = randint(0, self.config.N_CLASS - 1)
-            while negative_idx == anchor_idx:
+            while negative_idx == anchor_idx or negative_idx == new_whale_idx:
                 negative_idx = randint(0, self.config.N_CLASS - 1)
 
             negative_cls = self.config.CLASSES[negative_idx]

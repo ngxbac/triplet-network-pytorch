@@ -6,7 +6,11 @@ class Embedding(nn.Module):
     def __init__(self):
         super(Embedding, self).__init__()
         self.base_model = resnet50(pretrained=True)
-        self.base_model.fc = nn.Linear(in_features=2048, out_features=128, bias=True)
+        # self.base_model.fc = nn.Linear(in_features=2048, out_features=128, bias=True)
+        self.base_model.fc = nn.Sequential(
+            nn.Linear(in_features=2048, out_features=128),
+            nn.Linear(in_features=128, out_features=128)
+        )
 
     def forward(self, x):
         return self.base_model(x)
