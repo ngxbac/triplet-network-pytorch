@@ -49,7 +49,7 @@ class WhaleLoader(data.Dataset):
     def make_triplet_list(self, ntriplets):
 
         # Training with labels which is not new_whale only.
-        new_whale_idx = self.config.CLS_TO_IDX("new_whale")
+        new_whale_idx = self.config.CLS_TO_IDX["new_whale"]
 
         print("3===D~ Generating {} triplets".format(ntriplets))
 
